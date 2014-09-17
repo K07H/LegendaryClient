@@ -55,7 +55,7 @@
             <sys:String>OCE</sys:String>
             <sys:String>RU</sys:String>
             <sys:String>TR</sys:String>
-            <sys:String>PBE</sys:String>
+            <!--<sys:String>PBE</sys:String>-->
         </x:Array>
 
         <x:Array x:Key="TeamSizes" Type="sys:Int32"
@@ -81,13 +81,13 @@
             <sys:String>All Random</sys:String>
             <sys:String>Tournament Draft</sys:String>
             <!-- Modes unavailable to the public-->
-            <sys:String>One for All</sys:String>
+            <!--<sys:String>One for All</sys:String>
             <sys:String>Open Pick</sys:String>
             <sys:String>Infinite Time Blind Pick</sys:String>
             <sys:String>Infinite Time Blind PickTest</sys:String>
             <sys:String>Captain Pick</sys:String>
             <sys:String>No Ban Draft</sys:String>
-            <sys:String>Blind Draft</sys:String>
+            <sys:String>Blind Draft</sys:String>-->
             <sys:String>Ascension</sys:String>
         </x:Array>
 
