@@ -43,12 +43,13 @@ namespace LegendaryClient.Windows
             {
                 switch ((string)PresenceChanger.SelectedValue)
                 {
-                    case "Online":
-                        Client.CurrentPresence = PresenceType.available;
-                        break;
-
                     case "Invisible":
                         Client.CurrentPresence = PresenceType.invisible;
+                        break;
+                    default:
+                        Client.CurrentPresenceMode = (string)PresenceChanger.SelectedValue;
+                        Client.CurrentPresence = PresenceType.available;
+                        Client.SetChatHover();
                         break;
                 }
             }
@@ -64,7 +65,7 @@ namespace LegendaryClient.Windows
                 }
                 else if (StatusBox.Text == "Set your status message")
                 {
-                    Client.CurrentStatus = "Online";
+                    Client.CurrentStatus = ""; // Default status set to empty.
                 }
 
                 Properties.Settings.Default.StatusMsg = StatusBox.Text;

@@ -1,11 +1,14 @@
 ﻿using LegendaryClient.Logic;
 using LegendaryClient.Logic.Riot;
 using LegendaryClient.Logic.Riot.Platform;
+using RtmpSharp.Messaging;
+using RtmpSharp.Net;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 
 namespace LegendaryClient.Windows
@@ -16,6 +19,7 @@ namespace LegendaryClient.Windows
     public partial class CreateCustomGamePage : Page
     {
         bool PageLoaded = false;
+
         public CreateCustomGamePage()
         {
             InitializeComponent();
@@ -28,8 +32,24 @@ namespace LegendaryClient.Windows
         {
             NameInvalidLabel.Visibility = Visibility.Hidden;
             PracticeGameConfig gameConfig = GenerateGameConfig();
-            GameDTO dto = await RiotCalls.CreatePracticeGame(gameConfig);
-            CreatedGame(dto);
+            try
+            {
+                GameDTO dto = await RiotCalls.CreatePracticeGame(gameConfig);
+                CreatedGame(dto);
+            }
+            catch (ClientDisconnectedException ex)
+            {
+                ErrorTextBox.Text = "Client has been disconnected. Please retry.";
+                ErrorTextBox.Visibility = System.Windows.Visibility.Visible;
+            }
+            catch (InvocationException ex)
+            {
+                if (ex.Message.Contains("GameModeNotSupported"))
+                    ErrorTextBox.Text = "Game mode not supported.";    
+                else
+                    ErrorTextBox.Text = "Unable to create custom game.";
+                ErrorTextBox.Visibility = System.Windows.Visibility.Visible;
+            }
         }
 
         private PracticeGameConfig GenerateGameConfig()

@@ -36,12 +36,12 @@ namespace LegendaryClient.Logic
         /// <summary>
         /// Latest champion for League of Legends login screen
         /// </summary>
-        internal const int LatestChamp = 157;
+        internal const int LatestChamp = 268;
 
         /// <summary>
         /// Latest version of League of Legends. Retrieved from ClientLibCommon.dat
         /// </summary>
-        internal static string Version = "3.00.00";
+        internal static string Version = "4.00.00";
 
         /// <summary>
         /// The current directory the client is running from
@@ -100,6 +100,23 @@ namespace LegendaryClient.Logic
         public delegate void OnMessageHandler(object sender, jabber.protocol.client.Message e);
         public static event OnMessageHandler OnMessage;
 
+        internal static string _CurrentPresenceMode = "Online";
+
+        internal static string CurrentPresenceMode
+        {
+            get { return _CurrentPresenceMode; }
+            set
+            {
+                if (_CurrentPresenceMode != value)
+                {
+                    _CurrentPresenceMode = value;
+                    if (ChatClient != null)
+                        if (ChatClient.IsAuthenticated)
+                            SetChatHover();
+                }
+            }
+        }
+
         internal static PresenceType _CurrentPresence;
 
         internal static PresenceType CurrentPresence
@@ -111,12 +128,8 @@ namespace LegendaryClient.Logic
                 {
                     _CurrentPresence = value;
                     if (ChatClient != null)
-                    {
                         if (ChatClient.IsAuthenticated)
-                        {
                             SetChatHover();
-                        }
-                    }
                 }
             }
         }
@@ -245,28 +258,63 @@ namespace LegendaryClient.Logic
 
         internal static void SetChatHover()
         {
+            SetChatHover(_CurrentPresenceMode);
+        }
+
+        internal static void SetChatHover(string presenceMode)
+        {
             if (ChatClient.IsAuthenticated)
             {
-                ChatClient.Presence(CurrentPresence, GetPresence(), null, 0);
+                switch (presenceMode)
+                {
+                    case "Online":
+                        ChatClient.Presence(CurrentPresence, GetPresence(presenceMode), "chat", 0);
+                        break;
+                    case "Away":
+                        ChatClient.Presence(CurrentPresence, GetPresence(presenceMode), "away", 0);
+                        break;
+                    case "Busy":
+                        ChatClient.Presence(CurrentPresence, GetPresence(presenceMode), "dnd", 0);
+                        break;
+                    case "ChatMobile":
+                        ChatClient.Presence(CurrentPresence, GetPresence(presenceMode), "chatMobile", 0);
+                        break;
+                }
+                
             }
         }
 
-        internal static string GetPresence()
+        internal static string GetPresence(string presenceMode)
         {
-            return "<body>" +
+            string status = "<body>" +
                 "<profileIcon>" + LoginPacket.AllSummonerData.Summoner.ProfileIconId + "</profileIcon>" +
                 "<level>" + LoginPacket.AllSummonerData.SummonerLevel.Level + "</level>" +
                 "<wins>" + AmountOfWins + "</wins>" +
                 (IsRanked ?
-                "<queueType /><rankedLosses>0</rankedLosses><rankedRating>0</rankedRating><tier>UNRANKED</tier>" + //Unused?
+                "<queueType /><rankedLosses>0</rankedLosses><rankedRating>3000</rankedRating><tier>PLATINUM</tier>" + //Unused?
                 "<rankedLeagueName>" + LeagueName + "</rankedLeagueName>" +
                 "<rankedLeagueDivision>" + Tier + "</rankedLeagueDivision>" +
                 "<rankedLeagueTier>" + TierName + "</rankedLeagueTier>" +
                 "<rankedLeagueQueue>RANKED_SOLO_5x5</rankedLeagueQueue>" +
                 "<rankedWins>" + AmountOfWins + "</rankedWins>" : "") +
-                "<gameStatus>" + GameStatus + "</gameStatus>" +
-                "<statusMsg>" + CurrentStatus + "∟</statusMsg>" + //Look for "∟" to recognize that LegendaryClient - not shown on normal client
-            "</body>";
+                "<gameStatus>" + GameStatus + "</gameStatus>";
+            switch (presenceMode)
+            {
+                case "Online":
+                    status += "<statusMsg>" + CurrentStatus + "</statusMsg>";
+                    break;
+                case "Away":
+                    status += "<statusMsg>Away</statusMsg>";
+                    break;
+                case "Busy":
+                    status += "<statusMsg>Busy</statusMsg>";
+                    break;
+                case "ChatMobile":
+                    status += "<statusMsg>Chat Mobile</statusMsg>";
+                    break;
+            }
+            status += "</body>";
+            return (status);
         }
 
         internal static void RostManager_OnRosterItem(object sender, jabber.protocol.iq.Item ri)
@@ -319,9 +367,7 @@ namespace LegendaryClient.Logic
                 Player.IsOnline = true;
 
                 if (String.IsNullOrWhiteSpace(Player.Status))
-                {
-                    Player.Status = "Online";
-                }
+                    Player.Status = "";
             }
         }
 
@@ -334,7 +380,7 @@ namespace LegendaryClient.Logic
                 while (reader.Read())
                 {
                     if (reader.IsStartElement())
-                    {   
+                    {
                         #region Parse Presence
 
                         switch (reader.Name)
@@ -761,14 +807,21 @@ namespace LegendaryClient.Logic
                 subdirs = dInfo.GetDirectories();
             }
             catch { return "0.0.0"; }
-            string latestVersion = "0.0.1";
+            
+            int latestVersion = 1;
+            // string latestVersion = "0.0.1";
             foreach (DirectoryInfo info in subdirs)
             {
-                latestVersion = info.Name;
+                // latestVersion = info.Name;
+                string[] tmp = info.Name.Split('.');
+                if (tmp != null && tmp.Length >= 4)
+                {
+                    if (latestVersion < Convert.ToInt32(tmp[3]))
+                        latestVersion = Convert.ToInt32(tmp[3]);
+                }
             }
-
-            Directory = Path.Combine(Directory, latestVersion, "deploy");
-
+            string latestVersionStr = "0.0.0." + Convert.ToString(latestVersion);
+            Directory = Path.Combine(Directory, latestVersionStr, "deploy");
             return Directory;
         }
 

@@ -862,14 +862,15 @@ namespace LegendaryClient.Logic.Riot
             JavaScriptSerializer serializer = new JavaScriptSerializer();
             Dictionary<string, object> deserializedJSON = serializer.Deserialize<Dictionary<string, object>>(sb.ToString());
 
+            // Get login status.
             string Status = (string)deserializedJSON["status"];
-
-            if (Status == "QUEUE")
+            if (Status == "QUEUE")  // In Queue
+                return null;
+            else                    // Connected
             {
-
+                string token = (string)deserializedJSON["token"];
+                return token;
             }
-
-            return (string)deserializedJSON["token"];
         }
 
         public static string GetIpAddress()
@@ -919,7 +920,7 @@ namespace LegendaryClient.Logic.Riot
             return context;
         }
 
-        enum PlayerSkill
+        public enum PlayerSkill
         {
             BEGINNER,
             VETERAN,

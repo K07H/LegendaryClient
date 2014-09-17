@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -28,12 +29,46 @@ namespace LegendaryClient.Windows
     /// </summary>
     public partial class LoginPage : Page
     {
+        public string GetGreaterVersion(string ver1, string ver2)
+        {
+            if (!String.IsNullOrEmpty(ver1) && !String.IsNullOrEmpty(ver2))
+            {
+                string[] tmp1 = ver1.Split('.');
+                string[] tmp2 = ver2.Split('.');
+                if (tmp1 != null && tmp2 != null && tmp1.Length == 4 && tmp2.Length == 4)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (Convert.ToInt32(tmp1[i]) < Convert.ToInt32(tmp2[i]))
+                            return (ver2);
+                    }
+                }
+            }
+            return (ver1);
+        }
+
         public LoginPage()
         {
             InitializeComponent();
 
             //Get client data after patcher completed
-            Client.SQLiteDatabase = new SQLite.SQLiteConnection("gameStats_en_US.sqlite");
+            string latestVersion = "0.0.0.0";
+            string GameLocation = Path.Combine("League of Legends", "RADS");
+            if (Directory.Exists(GameLocation))
+            {
+                System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
+                DirectoryInfo dInfo = new DirectoryInfo(Path.Combine(GameLocation, "projects", "lol_air_client", "releases"));
+                DirectoryInfo[] subdirs = null;
+                try
+                {
+                    subdirs = dInfo.GetDirectories();
+                    foreach (DirectoryInfo info in subdirs)
+                        latestVersion = GetGreaterVersion(latestVersion, info.Name);
+                }
+                catch (Exception er) { Console.WriteLine(er.Message); }
+            }
+
+            Client.SQLiteDatabase = new SQLite.SQLiteConnection(Path.Combine(GameLocation, "projects", "lol_air_client", "releases", latestVersion, "deploy", "assets", "data", "gameStats", "gameStats_en_US.sqlite"));
             Client.Champions = (from s in Client.SQLiteDatabase.Table<champions>()
                                 orderby s.name
                                 select s).ToList();
@@ -99,7 +134,8 @@ namespace LegendaryClient.Windows
             {
                 RegionComboBox.SelectedValue = Properties.Settings.Default.Region;
             }
-            string uriSource = Path.Combine(Client.ExecutingDirectory, "Assets", "champions", champions.GetChampion(Client.LatestChamp).splashPath);
+            champions champ = champions.GetChampion(Client.LatestChamp);
+            string uriSource = Path.Combine(Client.ExecutingDirectory, "Assets", "champions", champ.splashPath);
             LoginImage.Source = Client.GetImage(uriSource);
             if (!String.IsNullOrWhiteSpace(Properties.Settings.Default.SavedPassword) &&
                 !String.IsNullOrWhiteSpace(Properties.Settings.Default.Region) &&
@@ -147,33 +183,54 @@ namespace LegendaryClient.Windows
             newCredentials.IpAddress = RiotCalls.GetIpAddress();
             newCredentials.Locale = SelectedRegion.Locale;
             newCredentials.Domain = "lolclient.lol.riotgames.com";
+            while (newCredentials.AuthToken == null) // while we are in queue...
+            {
+                try
+                {
+                    if ((newCredentials.AuthToken = RiotCalls.GetAuthKey(LoginUsernameBox.Text, LoginPasswordBox.Password, SelectedRegion.LoginQueue)) == null)
+                        Task.Factory.StartNew(() =>
+                        {
+                            Thread.Sleep(1000); // this line won't make UI freeze.
+                        });
+                }
+                catch (Exception e)
+                {
+                    HideGrid.Visibility = Visibility.Visible;
+                    ErrorTextBox.Visibility = Visibility.Visible;
+                    LoggingInProgressRing.Visibility = Visibility.Hidden;
+                    LoggingInLabel.Visibility = Visibility.Hidden;
+                    if (e.Message.Contains("The remote name could not be resolved"))
+                        ErrorTextBox.Text = "Please make sure you are connected the internet!";
+                    else if (e.Message.Contains("(403) Forbidden"))
+                        ErrorTextBox.Text = "Your username or password is incorrect!";
+                    else
+                        ErrorTextBox.Text = "Unable to get Auth Key. Please retry.";
+
+                    ErrorTextBox.Text += string.Format("{0}{1}{0}{2}", Environment.NewLine, e.Message, e.StackTrace);
+                    return;
+                }
+            }
+            Session login = null;
             try
             {
-                newCredentials.AuthToken = RiotCalls.GetAuthKey(LoginUsernameBox.Text, LoginPasswordBox.Password, SelectedRegion.LoginQueue);
+                login = await RiotCalls.Login(newCredentials);
             }
-            catch (Exception e)
+            catch (InvocationException ex)
             {
-                HideGrid.Visibility = Visibility.Visible;
-                ErrorTextBox.Visibility = Visibility.Visible;
-                LoggingInProgressRing.Visibility = Visibility.Hidden;
-                LoggingInLabel.Visibility = Visibility.Hidden;
-                if (e.Message.Contains("The remote name could not be resolved"))
-                    ErrorTextBox.Text = "Please make sure you are connected the internet!";
-                else if (e.Message.Contains("(403) Forbidden"))
-                    ErrorTextBox.Text = "Your username or password is incorrect!";
-                else
-                    ErrorTextBox.Text = "Unable to get Auth Key";
-
-                ErrorTextBox.Text += string.Format("{0}{1}{0}{2}", Environment.NewLine, e.Message, e.StackTrace);
-                return;
+                Console.WriteLine(ex.Message);
             }
-
-            Session login = await RiotCalls.Login(newCredentials);
-            Client.PlayerSession = login;
-            await Client.RtmpConnection.SubscribeAsync("my-rtmps", "messagingDestination", "bc", "bc-" + login.AccountSummary.AccountId.ToString());
-            await Client.RtmpConnection.SubscribeAsync("my-rtmps", "messagingDestination", "gn-" + login.AccountSummary.AccountId.ToString(), "gn-" + login.AccountSummary.AccountId.ToString());
-            await Client.RtmpConnection.SubscribeAsync("my-rtmps", "messagingDestination", "cn-" + login.AccountSummary.AccountId.ToString(), "cn-" + login.AccountSummary.AccountId.ToString());
-            bool LoggedIn = await Client.RtmpConnection.LoginAsync(LoginUsernameBox.Text.ToLower(), login.Token);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            if (login != null)
+            {
+                Client.PlayerSession = login;
+                await Client.RtmpConnection.SubscribeAsync("my-rtmps", "messagingDestination", "bc", "bc-" + login.AccountSummary.AccountId.ToString());
+                await Client.RtmpConnection.SubscribeAsync("my-rtmps", "messagingDestination", "gn-" + login.AccountSummary.AccountId.ToString(), "gn-" + login.AccountSummary.AccountId.ToString());
+                await Client.RtmpConnection.SubscribeAsync("my-rtmps", "messagingDestination", "cn-" + login.AccountSummary.AccountId.ToString(), "cn-" + login.AccountSummary.AccountId.ToString());
+                bool LoggedIn = await Client.RtmpConnection.LoginAsync(LoginUsernameBox.Text.ToLower(), login.Token);
+            }
             LoginDataPacket packet = await RiotCalls.GetLoginDataPacketForUser();
             string State = await RiotCalls.GetAccountState();
 

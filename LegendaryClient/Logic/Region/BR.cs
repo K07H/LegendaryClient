@@ -46,7 +46,7 @@ namespace LegendaryClient.Logic.Region
             {
                 return new IPAddress[]
                 {
-                    //No known IP address
+                    // No known IP address
                 };
             }
         }

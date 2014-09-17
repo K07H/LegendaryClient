@@ -294,122 +294,125 @@ namespace LegendaryClient.Windows
             BlueListView.Items.Clear();
             PurpleListView.Items.Clear();
             int GameId = 0;
-            var objectGame = gameList[SelectedGame];
-            Dictionary<string, object> SpectatorGame = objectGame as Dictionary<string, object>;
-            foreach (KeyValuePair<string, object> pair in SpectatorGame)
+            if (gameList.Count > SelectedGame)
             {
-                if (pair.Key == "participants")
+                var objectGame = gameList[SelectedGame];
+                Dictionary<string, object> SpectatorGame = objectGame as Dictionary<string, object>;
+                foreach (KeyValuePair<string, object> pair in SpectatorGame)
                 {
-                    ArrayList players = pair.Value as ArrayList;
-                    foreach (var objectPlayer in players)
+                    if (pair.Key == "participants")
                     {
-                        Dictionary<string, object> playerInfo = objectPlayer as Dictionary<string, object>;
-                        int teamId = 100;
-                        int championId = 0;
-                        int spell1Id = 0;
-                        int spell2Id = 0;
-                        string PlayerName = "";
-                        foreach (KeyValuePair<string, object> playerPair in playerInfo)
+                        ArrayList players = pair.Value as ArrayList;
+                        foreach (var objectPlayer in players)
                         {
-                            if (playerPair.Key == "teamId")
+                            Dictionary<string, object> playerInfo = objectPlayer as Dictionary<string, object>;
+                            int teamId = 100;
+                            int championId = 0;
+                            int spell1Id = 0;
+                            int spell2Id = 0;
+                            string PlayerName = "";
+                            foreach (KeyValuePair<string, object> playerPair in playerInfo)
                             {
-                                teamId = (int)playerPair.Value;
+                                if (playerPair.Key == "teamId")
+                                {
+                                    teamId = (int)playerPair.Value;
+                                }
+                                if (playerPair.Key == "championId")
+                                {
+                                    championId = (int)playerPair.Value;
+                                }
+                                if (playerPair.Key == "summonerName")
+                                {
+                                    PlayerName = playerPair.Value as string;
+                                }
+                                if (playerPair.Key == "spell1Id")
+                                {
+                                    spell1Id = (int)playerPair.Value;
+                                }
+                                if (playerPair.Key == "spell2Id")
+                                {
+                                    spell2Id = (int)playerPair.Value;
+                                }
                             }
-                            if (playerPair.Key == "championId")
-                            {
-                                championId = (int)playerPair.Value;
-                            }
-                            if (playerPair.Key == "summonerName")
-                            {
-                                PlayerName = playerPair.Value as string;
-                            }
-                            if (playerPair.Key == "spell1Id")
-                            {
-                                spell1Id = (int)playerPair.Value;
-                            }
-                            if (playerPair.Key == "spell2Id")
-                            {
-                                spell2Id = (int)playerPair.Value;
-                            }
-                        }
-                        ChampSelectPlayer control = new ChampSelectPlayer();
-                        control.ChampionImage.Source = champions.GetChampion(championId).icon;
-                        string uriSource = Path.Combine(Client.ExecutingDirectory, "Assets", "spell", SummonerSpell.GetSpellImageName(spell1Id));
-                        control.SummonerSpell1.Source = Client.GetImage(uriSource);
-                        uriSource = Path.Combine(Client.ExecutingDirectory, "Assets", "spell", SummonerSpell.GetSpellImageName(spell2Id));
-                        control.SummonerSpell2.Source = Client.GetImage(uriSource);
+                            ChampSelectPlayer control = new ChampSelectPlayer();
+                            control.ChampionImage.Source = champions.GetChampion(championId).icon;
+                            string uriSource = Path.Combine(Client.ExecutingDirectory, "Assets", "spell", SummonerSpell.GetSpellImageName(spell1Id));
+                            control.SummonerSpell1.Source = Client.GetImage(uriSource);
+                            uriSource = Path.Combine(Client.ExecutingDirectory, "Assets", "spell", SummonerSpell.GetSpellImageName(spell2Id));
+                            control.SummonerSpell2.Source = Client.GetImage(uriSource);
 
-                        control.PlayerName.Content = PlayerName;
+                            control.PlayerName.Content = PlayerName;
 
-                        if (teamId == 100)
-                        {
-                            BlueListView.Items.Add(control);
-                        }
-                        else
-                        {
-                            PurpleListView.Items.Add(control);
-                        }
-                    }
-                }
-                if (pair.Key == "gameId")
-                {
-                    GameId = (int)pair.Value;
-                }
-                if (pair.Key == "bannedChampions")
-                {
-                    ArrayList keyArray = pair.Value as ArrayList;
-                    if (keyArray.Count > 0)
-                    {
-                        BlueBansLabel.Visibility = Visibility.Visible;
-                        PurpleBansLabel.Visibility = Visibility.Visible;
-                    }
-                    foreach (Dictionary<string, object> keyArrayP in keyArray)
-                    {
-                        int cid = 0;
-                        int teamId = 100;
-                        foreach (KeyValuePair<string, object> keyArrayPair in keyArrayP)
-                        {
-                            if (keyArrayPair.Key == "championId")
+                            if (teamId == 100)
                             {
-                                cid = (int)keyArrayPair.Value;
+                                BlueListView.Items.Add(control);
                             }
-                            if (keyArrayPair.Key == "teamId")
+                            else
                             {
-                                teamId = (int)keyArrayPair.Value;
+                                PurpleListView.Items.Add(control);
                             }
                         }
-                        ListViewItem item = new ListViewItem();
-                        Image champImage = new Image();
-                        champImage.Height = 58;
-                        champImage.Width = 58;
-                        champImage.Source = champions.GetChampion(cid).icon;
-                        item.Content = champImage;
-                        if (teamId == 100)
+                    }
+                    if (pair.Key == "gameId")
+                    {
+                        GameId = (int)pair.Value;
+                    }
+                    if (pair.Key == "bannedChampions")
+                    {
+                        ArrayList keyArray = pair.Value as ArrayList;
+                        if (keyArray.Count > 0)
                         {
-                            BlueBanListView.Items.Add(item);
+                            BlueBansLabel.Visibility = Visibility.Visible;
+                            PurpleBansLabel.Visibility = Visibility.Visible;
                         }
-                        else
+                        foreach (Dictionary<string, object> keyArrayP in keyArray)
                         {
-                            PurpleBanListView.Items.Add(item);
+                            int cid = 0;
+                            int teamId = 100;
+                            foreach (KeyValuePair<string, object> keyArrayPair in keyArrayP)
+                            {
+                                if (keyArrayPair.Key == "championId")
+                                {
+                                    cid = (int)keyArrayPair.Value;
+                                }
+                                if (keyArrayPair.Key == "teamId")
+                                {
+                                    teamId = (int)keyArrayPair.Value;
+                                }
+                            }
+                            ListViewItem item = new ListViewItem();
+                            Image champImage = new Image();
+                            champImage.Height = 58;
+                            champImage.Width = 58;
+                            champImage.Source = champions.GetChampion(cid).icon;
+                            item.Content = champImage;
+                            if (teamId == 100)
+                            {
+                                BlueBanListView.Items.Add(item);
+                            }
+                            else
+                            {
+                                PurpleBanListView.Items.Add(item);
+                            }
                         }
                     }
                 }
+
+                try
+                {
+                    BaseRegion region = BaseRegion.GetRegion((string)SpectatorComboBox.SelectedValue);
+                    string spectatorJSON = "";
+                    string url = region.SpectatorLink + "consumer/getGameMetaData/" + region.InternalName + "/" + GameId + "/token";
+                    using (WebClient client = new WebClient())
+                    {
+                        spectatorJSON = await client.DownloadStringTaskAsync(url);
+                    }
+                    JavaScriptSerializer serializer = new JavaScriptSerializer();
+                    Dictionary<string, object> deserializedJSON = serializer.Deserialize<Dictionary<string, object>>(spectatorJSON);
+                    MMRLabel.Content = "≈" + deserializedJSON["interestScore"];
+                }
+                catch { MMRLabel.Content = "N/A"; }
             }
-
-            try
-            {
-                BaseRegion region = BaseRegion.GetRegion((string)SpectatorComboBox.SelectedValue);
-                string spectatorJSON = "";
-                string url = region.SpectatorLink + "consumer/getGameMetaData/" + region.InternalName + "/" + GameId + "/token";
-                using (WebClient client = new WebClient())
-                {
-                    spectatorJSON = await client.DownloadStringTaskAsync(url);
-                }
-                JavaScriptSerializer serializer = new JavaScriptSerializer();
-                Dictionary<string, object> deserializedJSON = serializer.Deserialize<Dictionary<string, object>>(spectatorJSON);
-                MMRLabel.Content = "≈" + deserializedJSON["interestScore"];
-            }
-            catch { MMRLabel.Content = "N/A"; }
         }
 
         private void SpectateButton_Click(object sender, RoutedEventArgs e)
@@ -453,9 +456,12 @@ namespace LegendaryClient.Windows
             NextGameButton.IsEnabled = true;
             PrevGameButton.IsEnabled = true;
             SelectedGame = SelectedGame + 1;
-            if (SelectedGame >= gameList.Count - 1)
+            if (gameList != null)
             {
-                NextGameButton.IsEnabled = false;
+                if (SelectedGame >= gameList.Count - 1)
+                {
+                    NextGameButton.IsEnabled = false;
+                }
             }
             ParseSpectatorGames();
         }

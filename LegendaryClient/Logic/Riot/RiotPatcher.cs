@@ -19,7 +19,7 @@ namespace LegendaryClient.Logic.Riot
             string dragonJSON = "";
             using (WebClient client = new WebClient())
             {
-                dragonJSON = client.DownloadString("http://ddragon.leagueoflegends.com/realms/na.js");
+                dragonJSON = client.DownloadString("http://ddragon.leagueoflegends.com/realms/euw.js");
             }
             dragonJSON = dragonJSON.Replace("Riot.DDragon.m=", "").Replace(";", "");
             JavaScriptSerializer serializer = new JavaScriptSerializer();
@@ -31,12 +31,30 @@ namespace LegendaryClient.Logic.Riot
             return s;
         }
 
+        public string GetGreaterVersion(string ver1, string ver2)
+        {
+            if (!String.IsNullOrEmpty(ver1) && !String.IsNullOrEmpty(ver2))
+            {
+                string[] tmp1 = ver1.Split('.');
+                string[] tmp2 = ver2.Split('.');
+                if (tmp1 != null && tmp2 != null && tmp1.Length == 4 && tmp2.Length == 4)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (Convert.ToInt32(tmp1[i]) < Convert.ToInt32(tmp2[i]))
+                            return (ver2);
+                    }
+                }
+            }
+            return (ver1);
+        }
+
         public string GetLatestAir()
         {
             string airVersions = "";
             using (WebClient client = new WebClient())
             {
-                airVersions = client.DownloadString("http://l3cdn.riotgames.com/releases/live/projects/lol_air_client/releases/releaselisting_NA");
+                airVersions = client.DownloadString("http://l3cdn.riotgames.com/releases/live/projects/lol_air_client/releases/releaselisting_EUW");
             }
             return airVersions.Split(new string[] { Environment.NewLine }, StringSplitOptions.None)[0];
         }
@@ -46,7 +64,7 @@ namespace LegendaryClient.Logic.Riot
             string gameVersions = "";
             using (WebClient client = new WebClient())
             {
-                gameVersions = client.DownloadString("http://l3cdn.riotgames.com/releases/live/projects/lol_game_client/releases/releaselisting_NA");
+                gameVersions = client.DownloadString("http://l3cdn.riotgames.com/releases/live/projects/lol_game_client/releases/releaselisting_EUW");
             }
             return gameVersions.Split(new string[] { Environment.NewLine }, StringSplitOptions.None)[0];
         }
@@ -61,27 +79,32 @@ namespace LegendaryClient.Logic.Riot
                 subdirs = dInfo.GetDirectories();
             }
             catch { return "0.0.0.0"; }
-            string latestVersion = "0.0.1";
+            string latestVersion = "0.0.0.0";
             foreach (DirectoryInfo info in subdirs)
-            {
-                latestVersion = info.Name;
-            }
+                latestVersion = GetGreaterVersion(latestVersion, info.Name);
 
             string AirLocation = Path.Combine(Location, latestVersion, "deploy");
-            if (!File.Exists(Path.Combine(Client.ExecutingDirectory, "ClientLibCommon.dat")))
-            {
-                File.Copy(Path.Combine(AirLocation, "lib", "ClientLibCommon.dat"), Path.Combine(Client.ExecutingDirectory, "ClientLibCommon.dat"));
-            }
-            if (!File.Exists(Path.Combine(Client.ExecutingDirectory, "gameStats_en_US.sqlite")))
-            {
-                File.Copy(Path.Combine(AirLocation, "assets", "data", "gameStats", "gameStats_en_US.sqlite"), Path.Combine(Client.ExecutingDirectory, "gameStats_en_US.sqlite"));
-            }
 
+            // Copy common client lib.
+            if (File.Exists(Path.Combine(Client.ExecutingDirectory, "ClientLibCommon.dat")))
+                File.Delete(Path.Combine(Client.ExecutingDirectory, "ClientLibCommon.dat"));
+            File.Copy(Path.Combine(AirLocation, "lib", "ClientLibCommon.dat"), Path.Combine(Client.ExecutingDirectory, "ClientLibCommon.dat"));
+
+            // Copy game stats database.
+            if (File.Exists(Path.Combine(Client.ExecutingDirectory, "gameStats_en_US.sqlite")))
+                File.Delete(Path.Combine(Client.ExecutingDirectory, "gameStats_en_US.sqlite"));
+            File.Copy(Path.Combine(AirLocation, "assets", "data", "gameStats", "gameStats_en_US.sqlite"), Path.Combine(Client.ExecutingDirectory, "gameStats_en_US.sqlite"));
+
+            // Copy champions images.
             Copy(Path.Combine(AirLocation, "assets", "images", "champions"), Path.Combine(Client.ExecutingDirectory, "Assets", "champions"));
 
-            var VersionAIR = File.Create(Path.Combine("Assets", "VERSION_AIR"));
+            // Store last air version id.
+            if (File.Exists(Path.Combine(Client.ExecutingDirectory, "Assets", "VERSION_AIR")))
+                File.Delete(Path.Combine(Client.ExecutingDirectory, "Assets", "VERSION_AIR"));
+            var VersionAIR = File.Create(Path.Combine(Client.ExecutingDirectory, "Assets", "VERSION_AIR"));
             VersionAIR.Write(encoding.GetBytes(latestVersion), 0, encoding.GetBytes(latestVersion).Length);
             VersionAIR.Close();
+
             return latestVersion;
         }
 
@@ -95,11 +118,9 @@ namespace LegendaryClient.Logic.Riot
                 subdirs = dInfo.GetDirectories();
             }
             catch { return "0.0.0.0"; }
-            string latestVersion = "0.0.1";
+            string latestVersion = "0.0.0.0";
             foreach (DirectoryInfo info in subdirs)
-            {
-                latestVersion = info.Name;
-            }
+                latestVersion = GetGreaterVersion(latestVersion, info.Name);
 
             string ParentDirectory = Directory.GetParent(GameLocation).FullName;
             if (Directory.Exists(Path.Combine(ParentDirectory, "Config")))
@@ -108,8 +129,10 @@ namespace LegendaryClient.Logic.Riot
             }
 
             Copy(Path.Combine(GameLocation, "projects", "lol_game_client"), Path.Combine(Client.ExecutingDirectory, "RADS", "projects", "lol_game_client"));
-            File.Copy(Path.Combine(GameLocation, "RiotRadsIO.dll"), Path.Combine(Client.ExecutingDirectory, "RADS", "RiotRadsIO.dll"));
+            File.Copy(Path.Combine(GameLocation, "RiotRadsIO.dll"), Path.Combine(Client.ExecutingDirectory, "RADS", "RiotRadsIO.dll"), true);
 
+            if (File.Exists(Path.Combine("RADS", "VERSION_LOL")))
+                File.Delete(Path.Combine("RADS", "VERSION_LOL"));
             var VersionAIR = File.Create(Path.Combine("RADS", "VERSION_LOL"));
             VersionAIR.Write(encoding.GetBytes(latestVersion), 0, encoding.GetBytes(latestVersion).Length);
             VersionAIR.Close();

@@ -34,8 +34,13 @@
         <TextBox x:Name="NameTextBox" TextWrapping="NoWrap" Text=""  HorizontalAlignment="Center" Margin="0,0,15,50" VerticalAlignment="Center" Width="255" TextChanged="NameTextBox_TextChanged" />
         <Label Content="Password" HorizontalAlignment="Center" Margin="0,0,200,0" VerticalAlignment="Center" FontSize="14" />
         <TextBox x:Name="PasswordTextBox" TextWrapping="NoWrap" Text=""  HorizontalAlignment="Center" Margin="0,50,15,0" VerticalAlignment="Center" Width="255" TextChanged="PasswordTextBox_TextChanged" />
-        <Button x:Name="CreateGameButton" Content="Create Game" HorizontalAlignment="Center" Margin="0,150,15,0" VerticalAlignment="Center" Width="255" Click="CreateGameButton_Click" />
+        <Button x:Name="CreateGameButton" Content="Create Game" HorizontalAlignment="Center" Margin="377,408,392,244" VerticalAlignment="Center" Width="255" Click="CreateGameButton_Click" />
         <TextBox x:Name="TournamentCodeTextbox" HorizontalAlignment="Stretch" Height="23" Margin="10,0,10,10" IsReadOnly="True" TextWrapping="Wrap" VerticalAlignment="Bottom" />
         <Label Content="Tournament Code Generator" HorizontalAlignment="Left" Margin="10,0,0,40" VerticalAlignment="Bottom" />
+        <TextBox x:Name="ErrorTextBox" Text="Error" TextWrapping="NoWrap" IsReadOnly="True" HorizontalAlignment="Center" Margin="0,110,15,0" VerticalAlignment="Center" Width="255" Height="20" FontSize="12" FontWeight="999" Foreground="#FFFF7373" Background="Transparent" Panel.ZIndex="-1" BorderBrush="{x:Null}" Visibility="Hidden">
+            <TextBox.Effect>
+                <DropShadowEffect ShadowDepth="3" />
+            </TextBox.Effect>
+        </TextBox>
     </Grid>
 </Page>

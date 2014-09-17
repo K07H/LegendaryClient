@@ -24,11 +24,11 @@ namespace LegendaryClient.Logic.Riot.Platform
 
         public Int32 minNumPlayersForPracticeGame { get; set; }
 
-        public Int32[] PracticeGameTypeConfigIdList { get; set; }
+        // public Int32[] PracticeGameTypeConfigIdList { get; set; }
 
         public Int32[] freeToPlayChampionIdList { get; set; }
 
-        public object[] inactiveChampionIdList { get; set; }
+        public Int32[] inactiveChampionIdList { get; set; }
 
         public Int32[] inactiveSpellIdList { get; set; }
 
@@ -124,10 +124,31 @@ namespace LegendaryClient.Logic.Riot.Platform
                 if (keyPair.Value.GetType() == typeof(ArrayList))
                 {
                     ArrayList tempArrayList = keyPair.Value as ArrayList;
+
                     if (tempArrayList.Count > 0)
-                        f.SetValue(this, ((ArrayList)keyPair.Value).ToArray(tempArrayList[0].GetType()));
+                    {
+                        if (Type.GetTypeCode(tempArrayList[0].GetType()) == TypeCode.Int32)
+                            f.SetValue(this, (((ArrayList)keyPair.Value).ToArray(tempArrayList[0].GetType())).Cast<Int32>().ToArray());
+                        else
+                            f.SetValue(this, ((ArrayList)keyPair.Value).ToArray(tempArrayList[0].GetType()));
+                    }
                     else
                         f.SetValue(this, null);
+                    
+                    /*
+                    ArrayList tempArrayList = keyPair.Value as ArrayList;
+                    if (tempArrayList.Count > 0)
+                    {
+                        Type tempArrayListType = tempArrayList[0].GetType();
+                        if (tempArrayListType == typeof(Int32))
+                            Int32[] arr = ((ArrayList)keyPair.Value).ToArray(tempArrayListType).Cast<Int32>().ToArray();
+                        int[] arr = objarr.Cast<int>().ToArray();
+
+                        f.SetValue(this, arrayList.ToArray(typeof(object)));
+                    }
+                    else
+                        f.SetValue(this, null);
+                     */
                 }
                 else
                 {

@@ -27,7 +27,7 @@ namespace LegendaryClient.Windows
             InitializeComponent();
         }
 
-
+        /*
         private void testbutton_Click(object sender, RoutedEventArgs e)
         {
             Client.Message("sum222908", "<body><inviteId>8649134</inviteId><userName>Snowl</userName><profileIconId>576</profileIconId><gameType>NORMAL_GAME</gameType><groupId></groupId><seasonRewards>-1</seasonRewards><mapId>1</mapId><queueId>2</queueId><gameMode>classic_pvp</gameMode><gameDifficulty></gameDifficulty></body>", ChatSubjects.GAME_INVITE);
@@ -39,5 +39,6 @@ namespace LegendaryClient.Windows
             Client.SwitchPage(new TeamQueuePage(x, true));
             this.Visibility = System.Windows.Visibility.Hidden;
         }
+        */
     }
 }

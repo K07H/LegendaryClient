@@ -38,6 +38,8 @@ namespace LegendaryClient.Windows
                 LogTextBox("Starting Patcher");
 
                 WebClient client = new WebClient();
+
+                #region Configure download bar
                 client.DownloadProgressChanged += (o, e) =>
                 {
                     Dispatcher.BeginInvoke(DispatcherPriority.Input, new ThreadStart(() =>
@@ -49,8 +51,9 @@ namespace LegendaryClient.Windows
                         CurrentProgressBar.Value = int.Parse(Math.Truncate(percentage).ToString());
                     }));
                 };
+                #endregion
 
-                #region LegendaryClient
+                #region Update this client
 
                 string CurrentMD5 = GetMd5();
                 LogTextBox("MD5: " + CurrentMD5);
@@ -92,7 +95,7 @@ namespace LegendaryClient.Windows
                         File.Delete("COL.ZIP");
                         System.Diagnostics.Process.Start("Patcher.exe");
                         Environment.Exit(0);*/
-                /*    }
+                    }
                 }
 #endif
                 LogTextBox("LegendaryClient is up to date");
@@ -100,13 +103,15 @@ namespace LegendaryClient.Windows
 
                 #endregion LegendaryClient
 
+                #region ProgressBar 20%
                 Dispatcher.BeginInvoke(DispatcherPriority.Input, new ThreadStart(() =>
                 {
                     TotalProgressLabel.Content = "20%";
                     TotalProgessBar.Value = 20;
                 }));
+                #endregion
 
-                #region DDragon
+                #region Get DDragon data
 
                 System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
                 if (!Directory.Exists("Assets"))
@@ -168,13 +173,15 @@ namespace LegendaryClient.Windows
 
                 #endregion DDragon
 
+                #region ProgressBar 50%
                 Dispatcher.BeginInvoke(DispatcherPriority.Input, new ThreadStart(() =>
                 {
-                    TotalProgressLabel.Content = "40%";
-                    TotalProgessBar.Value = 40;
+                    TotalProgressLabel.Content = "50%";
+                    TotalProgessBar.Value = 50;
                 }));
+                #endregion
 
-                #region lol_air_client
+                #region Update lol_air_client
 
                 if (!File.Exists(Path.Combine("Assets", "VERSION_AIR")))
                 {
@@ -231,11 +238,26 @@ namespace LegendaryClient.Windows
                     {
                         CurrentProgressLabel.Content = "Retrieving Air Assets";
                     }));
+                    AirLocation = Path.Combine("League of Legends", "RADS", "projects", "lol_air_client", "releases");
+                    if (Directory.Exists(AirLocation))
+                    {
+                        AirVersion = patcher.GetCurrentAirInstall(AirLocation);
+                        LogTextBox("Retrieved currently installed Air Assets");
+                        LogTextBox("Current Air Assets Version: " + AirVersion);
+                    }
                 }
 
                 #endregion lol_air_client
 
-                #region lol_game_client
+                #region ProgressBar 70%
+                Dispatcher.BeginInvoke(DispatcherPriority.Input, new ThreadStart(() =>
+                {
+                    TotalProgressLabel.Content = "70%";
+                    TotalProgessBar.Value = 70;
+                }));
+                #endregion
+
+                #region Update lol_game_client
 
                 if (!Directory.Exists("RADS"))
                 {
@@ -250,7 +272,7 @@ namespace LegendaryClient.Windows
                 }
 
                 string LatestGame = patcher.GetLatestGame();
-                LogTextBox("League Of Legends Version: " + LatestGame);
+                LogTextBox("League of Legends Version: " + LatestGame);
                 string GameVersion = File.ReadAllText(Path.Combine(Client.ExecutingDirectory, "RADS", "VERSION_LOL"));
                 LogTextBox("Current League of Legends Version: " + GameVersion);
                 RetrieveCurrentInstallation = false;
@@ -285,7 +307,7 @@ namespace LegendaryClient.Windows
                         }));
                         GameVersion = patcher.GetCurrentGameInstall(GameLocation);
                         LogTextBox("Retrieved currently installed League of Legends");
-                        LogTextBox("Current League of Legends Version: " + GameLocation);
+                        LogTextBox("Current League of Legends Version: " + GameVersion);
                     }
                 }
 
@@ -295,9 +317,24 @@ namespace LegendaryClient.Windows
                     {
                         CurrentProgressLabel.Content = "Retrieving League of Legends";
                     }));
+                    GameLocation = Path.Combine("League of Legends", "RADS");
+                    if (Directory.Exists(GameLocation))
+                    {
+                        GameVersion = patcher.GetCurrentGameInstall(GameLocation);
+                        LogTextBox("Retrieved currently installed League of Legends");
+                        LogTextBox("Current League of Legends Version: " + GameVersion);
+                    }
                 }
 
                 #endregion lol_game_client
+
+                #region ProgressBar 90%
+                Dispatcher.BeginInvoke(DispatcherPriority.Input, new ThreadStart(() =>
+                {
+                    TotalProgressLabel.Content = "90%";
+                    TotalProgessBar.Value = 90;
+                }));
+                #endregion
 
                 FinishPatching();
             });
